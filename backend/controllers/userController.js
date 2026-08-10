@@ -104,3 +104,36 @@ export const verify = async (req, res) => {
     });
   }
 };
+
+export const reVerify = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User Not Found ",
+      });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+      expiresIn: "10m",
+    });
+
+    verifyEmail(token, email);
+
+    user.token = token;
+    await user.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Verification Email sent again successfully ",
+      token: user.token,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
