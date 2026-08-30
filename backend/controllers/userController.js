@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
 import { User } from "../models/userModel.js";
-import { verifyEmail } from "../emailVerify/verifyEmail.js";
 import jwt from "jsonwebtoken";
+import { verifyEmail } from "../emailVerify/verifyEmail.js";
+import { Session } from "../models/sessionModel.js";
 
 export const register = async (req, res) => {
   try {
@@ -137,3 +138,83 @@ export const reVerify = async (req, res) => {
     });
   }
 };
+
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All Fields Are Rquired",
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect Email or Register User First",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      existingUser.password,
+    );
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Password",
+      });
+    }
+
+    if (existingUser.isVerified === false) {
+      return res.status(400).json({
+        success: false,
+        message: "Verify Your Account first Then Login",
+      });
+    }
+
+    // GENERATE TOKEN
+
+    const accessToken = jwt.sign(
+      { id: existingUser._id },
+      process.env.SECRET_KEY,
+      { expiresIn: "10d" },
+    );
+    const refreshToken = jwt.sign(
+      { id: existingUser._id },
+      process.env.SECRET_KEY,
+      { expiresIn: "30d" },
+    );
+
+    existingUser.isLoggedIn = true;
+    existingUser.otp = null;
+    await existingUser.save();
+
+    const existingSession = await Session.findOne({ userId: existingUser._id });
+    if (existingSession) {
+      await Session.deleteOne({ userId: existingUser._id });
+    }
+
+    // CREATE A NEW SESSION
+
+    await Session.create({
+      userId: existingUser._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Welcome Back ${existingUser.firstName}`,
+      user: existingUser,
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+

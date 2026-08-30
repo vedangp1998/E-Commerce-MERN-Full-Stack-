@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isLogedIn: {
+    isLoggedIn: {
       type: Boolean,
       default: false,
     },
