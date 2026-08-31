@@ -218,3 +218,19 @@ export const login = async (req, res) => {
   }
 };
 
+export const logout = async (req, res) => {
+  try {
+    const userId = req.id;
+    await Session.deleteMany({ userId: userId });
+    await User.findByIdAndUpdate(userId, { isLoggedIn: false });
+    return res.status(200).json({
+      success: false,
+      message: "User Logout Successfully",
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
