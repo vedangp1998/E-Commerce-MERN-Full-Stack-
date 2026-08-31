@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { User } from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 import { verifyEmail } from "../emailVerify/verifyEmail.js";
+import { sendOtpMail } from "../emailVerify/sendOtpMail.js";
 import { Session } from "../models/sessionModel.js";
 
 export const register = async (req, res) => {
@@ -37,7 +38,7 @@ export const register = async (req, res) => {
       expiresIn: "10m",
     });
 
-    verifyEmail(token, email, otp);
+    await verifyEmail(token, email, otp);
     newUser.token = token;
     await newUser.save();
 
@@ -117,11 +118,14 @@ export const reVerify = async (req, res) => {
       });
     }
 
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
       expiresIn: "10m",
     });
 
-    verifyEmail(token, email);
+    user.otp = otp;
+    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    await verifyEmail(token, email, otp);
 
     user.token = token;
     await user.save();
@@ -229,6 +233,137 @@ export const logout = async (req, res) => {
     });
   } catch (error) {
     return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User Not Found",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    user.otp = otp;
+    user.otpExpiry = otpExpiry;
+    await user.save();
+
+    await sendOtpMail(email, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP Sent to email successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const email = req.params.email;
+
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is required",
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User Not Found",
+      });
+    }
+
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is not generated or already verified",
+      });
+    }
+
+    if (user.otpExpiry < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP has Expired",
+      });
+    }
+    if (otp !== user.otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is invalid",
+      });
+    }
+
+    user.otp = null;
+    user.otpExpiry = null;
+    user.isLoggedIn = false;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP Verified Successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { newPassword, confirmPassword } = req.body;
+    const { email } = req.params;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Password do not Matched",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    await user.save();
+    return res.status(200).json({
+      success: true,
+      message: "Password Changed Successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
