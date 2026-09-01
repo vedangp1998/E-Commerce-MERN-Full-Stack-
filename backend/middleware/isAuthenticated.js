@@ -38,7 +38,26 @@ export const isAuthenticated = async (req, res, next) => {
       });
     }
     req.id = user._id;
+    req.user = user;
     next();
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const isAdmin = async (req, res, next) => {
+  try {
+    if (req.user && req.user.role === "admin") {
+      next();
+    } else {
+      return res.status(401).json({
+        success: false,
+        message: "Access denied or User are not Admin",
+      });
+    }
   } catch (error) {
     return res.status(500).json({
       success: false,
