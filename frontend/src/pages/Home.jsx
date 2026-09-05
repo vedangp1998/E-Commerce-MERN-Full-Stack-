@@ -1,9 +1,11 @@
-import Hero from "@/layout/Hero";
+import Features from "@/components/Features";
+import Hero from "@/components/Hero";
 
 const Home = () => {
   return (
     <>
       <Hero />
+      <Features />
     </>
   );
 };
