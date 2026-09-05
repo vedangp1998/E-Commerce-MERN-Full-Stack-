@@ -11,13 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import axios from "axios";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -28,7 +27,6 @@ const Signup = () => {
     password: "",
   });
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -38,15 +36,11 @@ const Signup = () => {
     }));
   };
 
-  // Handle form submission
   const submitHandler = async (e) => {
     e.preventDefault();
 
     try {
       setLoading(true);
-
-      console.log("Signup data:", formData);
-
       const res = await axios.post(
         "http://localhost:8000/api/v1/user/register",
         formData,
@@ -62,7 +56,6 @@ const Signup = () => {
       if (res.data.success) {
         toast.success(res.data.message || "Account created successfully!");
 
-        // Reset form
         setFormData({
           firstName: "",
           lastName: "",
@@ -70,10 +63,9 @@ const Signup = () => {
           password: "",
         });
 
-        // Navigate to verification page
         setTimeout(() => {
           navigate("/verify");
-        }, 800);
+        }, 200);
       } else {
         toast.error(res.data.message || "Signup failed. Please try again.");
       }
@@ -91,8 +83,9 @@ const Signup = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-pink-100 px-4">
-      <Card className="w-full max-w-sm">
+    <div className="relative flex min-h-[calc(100vh-7rem)] items-center justify-center overflow-hidden rounded-[2rem] bg-[#f3eadc] px-4 py-12">
+      <div className="absolute -left-20 bottom-10 h-64 w-64 rounded-full bg-[#b85d48]/15 blur-3xl" />
+      <Card className="relative w-full max-w-sm border-amber-950/10 bg-[#fbf8f1]/95 shadow-2xl shadow-[#6b3b2d]/10">
         <CardHeader>
           <CardTitle>Create Your Account</CardTitle>
 
@@ -183,9 +176,17 @@ const Signup = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-pink-600 hover:bg-pink-500"
+                className="w-full bg-[#a94f3d] hover:bg-[#873c2e]"
               >
-                {loading ? "Creating Account..." : "Signup"}
+                {loading ? (
+                  <>
+                    {" "}
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    "Creating Account..."
+                  </>
+                ) : (
+                  "Signup"
+                )}
               </Button>
 
               <p className="text-sm text-gray-700">
