@@ -5,7 +5,7 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Verify from "@/pages/Verify";
 import VerifyEmail from "@/pages/VerifyEmail";
-
+import Profile from "@/pages/Profile";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +31,10 @@ export const router = createBrowserRouter([
       {
         path: "/verify/:token",
         element: <VerifyEmail />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
       },
     ],
   },

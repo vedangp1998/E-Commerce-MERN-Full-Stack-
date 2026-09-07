@@ -2,9 +2,39 @@ import { Link } from "react-router-dom";
 import Logo from "../assets/logo.png";
 import { ShoppingCart, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "@/redux/userSlice";
 
 const Header = () => {
-  const user = true;
+  const dispatch = useDispatch();
+  const { user } = useSelector((store) => store.user);
+
+  const logoutHandler = async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    try {
+      const res = await axios.post(
+        "http://localhost:8000/api/v1/user/logout",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+      if (res.data.success) {
+        dispatch(setUser(null));
+        localStorage.removeItem("accessToken");
+        toast.success(res.data.message);
+        console.log("Logout Successfully");
+      }
+    } catch (error) {
+      localStorage.removeItem("accessToken");
+      dispatch(setUser(null));
+      console.log(error);
+    }
+  };
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-amber-950/10 bg-[#fbf8f1]/90 shadow-[0_12px_35px_-24px_rgba(63,38,24,0.6)] backdrop-blur-xl">
@@ -47,7 +77,7 @@ const Header = () => {
                   className="flex items-center gap-2 transition-colors duration-200 hover:text-pink-600"
                 >
                   <User className="h-4 w-4" />
-                  <span>Hello, User</span>
+                  <span>Hello, {user.firstName}</span>
                 </Link>
               </li>
             )}
@@ -71,6 +101,7 @@ const Header = () => {
             <Button
               variant="outline"
               className="hidden items-center gap-2 border-pink-300 text-pink-600 hover:bg-pink-600 hover:text-white sm:flex"
+              onClick={logoutHandler}
             >
               <LogOut className="h-4 w-4" />
               Logout

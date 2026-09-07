@@ -228,11 +228,29 @@ export const logout = async (req, res) => {
     await Session.deleteMany({ userId: userId });
     await User.findByIdAndUpdate(userId, { isLoggedIn: false });
     return res.status(200).json({
-      success: false,
+      success: true,
       message: "User Logout Successfully",
     });
   } catch (error) {
     return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.id).select(
+      "-password -otp -otpExpiry -token",
+    );
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

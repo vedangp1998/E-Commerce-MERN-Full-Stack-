@@ -14,9 +14,12 @@ import axios from "axios";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/redux/userSlice";
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -53,6 +56,8 @@ const Login = () => {
 
       if (res.data.success) {
         toast.success(res.data.message || "Login Successfully!");
+        dispatch(setUser(res.data.user));
+        localStorage.setItem("accessToken", res.data.accessToken);
 
         setFormData({
           email: "",

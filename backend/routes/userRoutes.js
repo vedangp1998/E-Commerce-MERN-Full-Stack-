@@ -10,6 +10,7 @@ import {
   changePassword,
   allUser,
   getUseById,
+  getCurrentUser,
 } from "../controllers/userController.js";
 import { isAdmin, isAuthenticated } from "../middleware/isAuthenticated.js";
 
@@ -20,6 +21,7 @@ router.post("/verify", verify);
 router.post("/reverify", reVerify);
 router.post("/login", login);
 router.post("/logout", isAuthenticated, logout);
+router.get("/me", isAuthenticated, getCurrentUser);
 router.post("/forgotpassword", forgotPassword);
 router.post("/verifyotp/:email", verifyOtp);
 router.post("/changepassword/:email", changePassword);
