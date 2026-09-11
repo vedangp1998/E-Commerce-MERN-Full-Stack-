@@ -17,7 +17,7 @@ const initialUser = {
   lastName: "Prajapati",
   email: "vedang@example.com",
   phoneNo: "+91 98765 43210",
-  zipCode: "380001",
+  zipCode: "452007",
   city: "Ahmedabad",
   address: "12 Riverfront Road, Navrangpura",
   profilePic: "",
