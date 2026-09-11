@@ -427,3 +427,78 @@ export const getUseById = async (req, res) => {
     });
   }
 };
+
+export const updateUser = async (req, res) => {
+  try {
+    const userIdToUpdate = req.params.id; //The ID of the user we want to update
+    const loggedInUser = req.user; //From IsAuthenticated middleware
+
+    const { firstName, lastName, address, city, zipCode, phone, role } =
+      req.body;
+
+    if (
+      loggedInUser._id.toString() !== userIdToUpdate &&
+      loggedInUser.role !== "admin"
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Youre not allowed to update this profile",
+      });
+    }
+
+    let user = await User.findById(userIdToUpdate);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User Not Found",
+      });
+    }
+
+    let profilePicUrl = user.profilePic;
+    let profilePicPublicId = user.profilePicPublicId;
+
+    //if a new file is uploaded
+    if (req.file) {
+      if (profilePicPublicId) {
+        await cloudinary.uploader.destroy(profilePicPublicId);
+      }
+
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "profiles" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          },
+        );
+        stream.end(req.file.buffer);
+      });
+      profilePicUrl = uploadResult.secure_url;
+      profilePicPublicId = uploadResult.public_id;
+    }
+
+    user.firstName = firstName || user.firstName;
+    user.lastName = lastName || user.lastName;
+    user.address = address || user.address;
+    user.city = city || user.city;
+    user.zipCode = zipCode || user.zipCode;
+    user.Phone = phone || user.phone;
+    user.role = role || user.role;
+    user.profilePic = profilePicUrl;
+    user.profilePicPublicId = profilePicPublicId;
+
+    const updateUser = await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile Updated Successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

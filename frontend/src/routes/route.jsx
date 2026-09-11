@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
         element: <VerifyEmail />,
       },
       {
-        path: "/profile",
+        path: "/profile/:userId",
         element: <Profile />,
       },
     ],

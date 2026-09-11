@@ -73,7 +73,7 @@ const Header = () => {
             {user && (
               <li>
                 <Link
-                  to="/profile"
+                  to={`/profile/${user._id}`}
                   className="flex items-center gap-2 transition-colors duration-200 hover:text-pink-600"
                 >
                   <User className="h-4 w-4" />
